@@ -1,6 +1,6 @@
 ---
 - name: Check disk usage of vda1 and alert if over 75%
-  hosts: ubuntu_servers
+  hosts: webservers
   become: yes
   tasks:
     - name: Check disk usage of vda1
