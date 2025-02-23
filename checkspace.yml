@@ -1,9 +1,18 @@
 ---
-- name: Check Disk Space Usage
+- name: Check disk usage of vda1 and alert if over 80%
   hosts: webservers
+  become: yes
   tasks:
-          - name: Disk usage from command module
-            ansible.builtin.command: df -h /dev/vda1
-            register: space
-          - ansible.builtin.debug:
-                  var: space
+    - name: Check disk usage of vda1
+      command: df -h /dev/vda1
+      register: disk_usage
+
+    - name: Parse disk usage of vda1
+      shell: "df -h /dev/vda1 | awk 'NR==2 {print $5}'"
+      register: disk_usage_parsed
+
+    - name: Alert if disk usage of vda1 is over 80%
+      debug:
+        msg: "Disk usage on /dev/vda1 is at {{ disk_usage_parsed.stdout }}"
+      when: "disk_usage_parsed.stdout | int > 80"
+
