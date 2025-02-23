@@ -1,9 +1,23 @@
 ---
-- name: Check WP Integrity
+- name: Scan for WordPress sites and update plugins
   hosts: webservers
+  become: yes
   tasks:
-          - name: Check WordPress Integrity
-            ansible.builtin.command: gp wp wpagencysupport.com plugin update --all
-            register: OK
-          - ansible.builtin.debug:
-                  var: OK
+    - name: Find WordPress installations
+      find:
+        paths: /
+        patterns: wp-config.php
+      register: wp_sites
+
+    - name: Update plugins for each WordPress site
+      block:
+        - name: Change to WordPress directory
+          command: chdir={{ item.path | dirname }}
+          with_items: "{{ wp_sites.files }}"
+          register: wp_dirs
+
+        - name: Update WordPress plugins
+          command: wp plugin update --all
+          with_items: "{{ wp_dirs.results }}"
+          when: item.rc == 0
+      when: wp_sites.matched > 0
