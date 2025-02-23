@@ -5,7 +5,7 @@
   tasks:
     - name: Find WordPress installations
       find:
-        paths: /
+        paths: /var/www
         patterns: wp-config.php
       register: wp_sites
 
