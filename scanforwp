@@ -1,0 +1,15 @@
+---
+- name: Scan server for WordPress installations
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Find WordPress installations
+      find:
+        paths: /
+        patterns: wp-config.php
+      register: wp_sites
+
+    - name: Display found WordPress installations
+      debug:
+        msg: "Found WordPress installation at {{ item.path | dirname }}"
+      with_items: "{{ wp_sites.files }}"
