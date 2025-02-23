@@ -11,8 +11,7 @@
       shell: "df -h /dev/vda1 | awk 'NR==2 {print $5}'"
       register: disk_usage_parsed
 
-    - name: Alert if disk usage of vda1 is over 75%
+    - name: Alert if disk usage of vda1 is over 80%
       debug:
         msg: "Disk usage on /dev/vda1 is at {{ disk_usage_parsed.stdout }}"
-      when: "disk_usage_parsed.stdout | int > 75"
-
+      when: "disk_usage_parsed.stdout | int > 80"
