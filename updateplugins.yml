@@ -4,6 +4,7 @@
   become: yes
   vars:
     teams_webhook_url: "https://rocketwplimited.webhook.office.com/webhookb2/2185f0da-502f-4a3f-b435-3c14e7a154b3@4963f8a3-9dbf-444f-aed6-754777afe177/IncomingWebhook/cb802ad2fb9e486ca90ab6de2fc601c4/9ce1a27b-d314-4803-9bea-b449036d1b9f/V2z-Vu5hxujeqBUwjGTxHS_7vFEYy54A3xXTD0ksyS7oI1"
+
   tasks:
     - name: Find WordPress installations
       find:
@@ -12,21 +13,19 @@
         recurse: yes
       register: wp_sites
 
-    - name: Get WordPress site URLs
-      shell: gp $(wp option get siteurl --path={{ item.path | dirname }}) wp option get siteurl
-      with_items: "{{ wp_sites.files }}"
-      register: site_urls
+    - name: Get WordPress site URLs (subdirectory names)
+      set_fact:
+        site_urls: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list }}"
 
     - name: Check and update WordPress plugins
-      shell: gp {{ item.stdout }} wp plugin list --field=name --status=active --update=available | xargs -I {} gp {{ item.stdout }} wp plugin update {}
-      with_items: "{{ site_urls.results }}"
-      when: item.rc == 0
+      shell: gp {{ item }} wp plugin list --field=name --status=active --update=available | xargs -I {} gp {{ item }} wp plugin update {}
+      with_items: "{{ site_urls }}"
       register: update_results
       ignore_errors: yes
 
     - name: Collect update results
       set_fact:
-        updates: "{{ updates | default([]) + [{'site': item.item.stdout, 'result': item.stdout}] }}"
+        updates: "{{ updates | default([]) + [{'site': item.item, 'result': item.stdout}] }}"
       with_items: "{{ update_results.results }}"
       when: item.rc == 0
 
