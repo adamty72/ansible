@@ -1,5 +1,6 @@
 ---
 - name: Check Disk Space Usage
+  hosts: sg1
   tasks:
           - name: Disk usage from command module
             ansible.builtin.command: df -h
