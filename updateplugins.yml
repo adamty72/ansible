@@ -12,23 +12,29 @@
         recurse: yes
       register: wp_sites
 
-    - name: Update plugins for each WordPress site
+    - name: Get WordPress site names and update plugins
       block:
         - name: Change to WordPress directory
           command: chdir={{ item.path | dirname }}
           with_items: "{{ wp_sites.files }}"
           register: wp_dirs
 
-        - name: Update WordPress plugins
-          command: gp {{ dirname }} wp plugin update --all --format=json
+        - name: Get WordPress site names
+          command: wp site list --field=url
           with_items: "{{ wp_dirs.results }}"
+          when: item.rc == 0
+          register: site_names
+
+        - name: Update WordPress plugins
+          shell: gp {{ item.item }} wp plugin update --all --format=json
+          with_items: "{{ site_names.results }}"
           when: item.rc == 0
           register: update_results
           ignore_errors: yes
 
         - name: Collect update results
           set_fact:
-            updates: "{{ updates | default([]) + [{'site': item.item.path | dirname, 'result': item.stdout | from_json}] }}"
+            updates: "{{ updates | default([]) + [{'site': item.item, 'result': item.stdout | from_json}] }}"
           with_items: "{{ update_results.results }}"
           when: item.rc == 0
 
