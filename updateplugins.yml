@@ -4,7 +4,7 @@
   become: yes
   vars:
     teams_webhook_url: "https://rocketwplimited.webhook.office.com/webhookb2/2185f0da-502f-4a3f-b435-3c14e7a154b3@4963f8a3-9dbf-444f-aed6-754777afe177/IncomingWebhook/cb802ad2fb9e486ca90ab6de2fc601c4/9ce1a27b-d314-4803-9bea-b449036d1b9f/V2z-Vu5hxujeqBUwjGTxHS_7vFEYy54A3xXTD0ksyS7oI1"
-
+    log_file: "/var/log/wp_update_failures.log"
   tasks:
     - name: Find WordPress installations
       find:
@@ -18,16 +18,25 @@
         site_urls: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list }}"
 
     - name: Check and update WordPress plugins
-      shell: gp wp {{ item }} plugin list --field=name --status=active --update=available | xargs -I {} gp wp {{ item }} plugin update {}
-      with_items: "{{ site_urls }}"
-      register: update_results
-      ignore_errors: yes
+      block:
+        - name: Update WordPress plugins
+          shell: gp wp {{ item }} plugin list --field=name --status=active --update=available | xargs -I {} gp wp {{ item }} plugin update {}
+          with_items: "{{ site_urls }}"
+          register: update_results
+          ignore_errors: yes
 
-    - name: Collect update results
-      set_fact:
-        updates: "{{ updates | default([]) + [{'site': item.item, 'result': item.stdout}] }}"
-      with_items: "{{ update_results.results }}"
-      when: item.rc == 0
+        - name: Collect update results
+          set_fact:
+            updates: "{{ updates | default([]) + [{'site': item.item, 'result': item.stdout, 'failed': item.rc != 0}] }}"
+          with_items: "{{ update_results.results }}"
+
+        - name: Log failed updates
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "Failed update on site {{ item.item }}: {{ item.stdout }}"
+            create: yes
+          with_items: "{{ update_results.results }}"
+          when: item.rc != 0
 
     - name: Send update results to Teams
       uri:
@@ -38,7 +47,7 @@
         body: >
           {
             "title": "WordPress Plugin Updates",
-            "text": "{{ updates | map('json_query', '[*].{site: site, plugins: result}') | list | to_nice_json }}"
+            "text": "{{ updates | map('json_query', '[*].{site: site, plugins: result, failed: failed}') | list | to_nice_json }}"
           }
         body_format: json
       when: updates is defined
