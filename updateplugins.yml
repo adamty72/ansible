@@ -1,0 +1,9 @@
+---
+- name: Check WP Integrity
+  hosts: webservers
+  tasks:
+          - name: Check WordPress Integrity
+            ansible.builtin.command: gp wp wpagencysupport.com plugin update --all
+            register: OK
+          - ansible.builtin.debug:
+                  var: OK
