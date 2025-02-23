@@ -3,7 +3,7 @@
   hosts: webservers
   tasks:
           - name: Disk usage from command module
-            ansible.builtin.command: df -h
+            ansible.builtin.command: df -h /dev/vda1
             register: space
           - ansible.builtin.debug:
                   var: space
