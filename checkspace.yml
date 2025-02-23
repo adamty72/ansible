@@ -3,8 +3,7 @@
   hosts: ubuntu_servers
   become: yes
   vars:
-    teams_webhook_url: "https://rocketwplimited.webhook.office.com/webhookb2/2185f0da-502f-4a3f-b435-3c14e7a154b3@4963f8a3-9dbf-444f-aed6-754777afe177/IncomingWebhook/cb802ad2fb9e486ca90ab6de2fc601c4/9ce1a27b-d314-4803-9bea-b449036d1b9f/V2z-Vu5hxujeqBUwjGTxHS_7vFEYy54A3xXTD0ksyS7oI1"
-  tasks:"
+    teams_webhook_url: ""https://rocketwplimited.webhook.office.com/webhookb2/2185f0da-502f-4a3f-b435-3c14e7a154b3@4963f8a3-9dbf-444f-aed6-754777afe177/IncomingWebhook/cb802ad2fb9e486ca90ab6de2fc601c4/9ce1a27b-d314-4803-9bea-b449036d1b9f/V2z-Vu5hxujeqBUwjGTxHS_7vFEYy54A3xXTD0ksyS7oI1""
   tasks:
     - name: Check disk usage of vda1
       shell: "df -h /dev/vda1 | awk 'NR==2 {print $5}' | sed 's/%//'"
