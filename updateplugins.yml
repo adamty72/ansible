@@ -1,6 +1,6 @@
 ---
 - name: Scan for WordPress updates and apply them
-  hosts: wordpress_servers
+  hosts: webservers
   become: yes
   vars:
     teams_webhook_url: "https://rocketwplimited.webhook.office.com/webhookb2/2185f0da-502f-4a3f-b435-3c14e7a154b3@4963f8a3-9dbf-444f-aed6-754777afe177/IncomingWebhook/cb802ad2fb9e486ca90ab6de2fc601c4/9ce1a27b-d314-4803-9bea-b449036d1b9f/V2z-Vu5hxujeqBUwjGTxHS_7vFEYy54A3xXTD0ksyS7oI1"
@@ -20,7 +20,7 @@
           register: wp_dirs
 
         - name: Update WordPress plugins
-          command: wp plugin update --all --format=json
+          command: gp {{ dirname }} wp plugin update --all --format=json
           with_items: "{{ wp_dirs.results }}"
           when: item.rc == 0
           register: update_results
