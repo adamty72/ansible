@@ -13,7 +13,7 @@
       register: wp_sites
 
     - name: Get WordPress site URLs
-      shell: wp option get siteurl --path={{ item.path | dirname }}
+      shell: gp $(wp option get siteurl --path={{ item.path | dirname }}) wp option get siteurl
       with_items: "{{ wp_sites.files }}"
       register: site_urls
 
