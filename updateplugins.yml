@@ -12,31 +12,23 @@
         recurse: yes
       register: wp_sites
 
-    - name: Get WordPress site URLs and update plugins
-      block:
-        - name: Change to WordPress directory
-          command: chdir={{ item.path | dirname }}
-          with_items: "{{ wp_sites.files }}"
-          register: wp_dirs
+    - name: Get WordPress site URLs
+      shell: wp option get siteurl --path={{ item.path | dirname }}
+      with_items: "{{ wp_sites.files }}"
+      register: site_urls
 
-        - name: Get WordPress site URLs
-          command: wp site list --field=url
-          with_items: "{{ wp_dirs.results }}"
-          when: item.rc == 0
-          register: site_urls
+    - name: Check and update WordPress plugins
+      shell: gp {{ item.stdout }} wp plugin list --field=name --status=active --update=available | xargs -I {} gp {{ item.stdout }} wp plugin update {}
+      with_items: "{{ site_urls.results }}"
+      when: item.rc == 0
+      register: update_results
+      ignore_errors: yes
 
-        - name: Update WordPress plugins
-          shell: gp {{ item.item }} wp plugin update --all --format=json
-          with_items: "{{ site_urls.results }}"
-          when: item.rc == 0
-          register: update_results
-          ignore_errors: yes
-
-        - name: Collect update results
-          set_fact:
-            updates: "{{ updates | default([]) + [{'site': item.item, 'result': item.stdout | from_json}] }}"
-          with_items: "{{ update_results.results }}"
-          when: item.rc == 0
+    - name: Collect update results
+      set_fact:
+        updates: "{{ updates | default([]) + [{'site': item.item.stdout, 'result': item.stdout}] }}"
+      with_items: "{{ update_results.results }}"
+      when: item.rc == 0
 
     - name: Send update results to Teams
       uri:
