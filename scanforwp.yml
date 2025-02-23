@@ -5,7 +5,7 @@
   tasks:
     - name: Find WordPress installations
       find:
-        paths: /var/www
+        paths: /
         patterns: wp-config.php
         recurse: yes
       register: wp_sites
@@ -17,4 +17,5 @@
     - name: List found WordPress installations
       debug:
         msg: "Found WordPress installation at {{ item.path | dirname }}"
+      with_items: "{{ wp_sites.files }}"
       when: wp_sites.matched > 0
