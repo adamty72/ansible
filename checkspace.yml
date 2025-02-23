@@ -1,17 +1,13 @@
 ---
-- name: Check disk usage of vda1 and alert if over 80%
-  hosts: webservers
+- name: Check disk usage of vda1 and alert if over 75%
+  hosts: ubuntu_servers
   become: yes
   tasks:
     - name: Check disk usage of vda1
-      command: df -h /dev/vda1
+      shell: "df -h /dev/vda1 | awk 'NR==2 {print $5}' | sed 's/%//'"
       register: disk_usage
 
-    - name: Parse disk usage of vda1
-      shell: "df -h /dev/vda1 | awk 'NR==2 {print $5}'"
-      register: disk_usage_parsed
-
-    - name: Alert if disk usage of vda1 is over 80%
+    - name: Alert if disk usage of vda1 is over 75%
       debug:
-        msg: "Disk usage on /dev/vda1 is at {{ disk_usage_parsed.stdout }}"
-      when: "disk_usage_parsed.stdout | int > 80"
+        msg: "Disk usage on /dev/vda1 is at {{ disk_usage.stdout }}%"
+      when: "disk_usage.stdout | int > 75"
