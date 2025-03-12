@@ -22,4 +22,17 @@
       with_items: "{{ site_urls }}"
       register: update_results
       ignore_errors: yes
-
+      
+   - name: Send update results to Teams
+      uri:
+        url: "{{ teams_webhook_url }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body: >
+          {
+            "title": "WordPress Plugin Updates",
+            "text": "{{ updates | map('json_query', '[*].{site: site, plugins: result}') | list | to_nice_json }}"
+          }
+        body_format: json
+      when: updates is defined
