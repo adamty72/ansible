@@ -23,7 +23,7 @@
       register: update_results
       ignore_errors: yes
       
-   - name: Collect update results
+    - name: Collect update results
       set_fact:
         updates: "{{ updates | default([]) + [{'site': item.item, 'result': item.stdout}] }}"
       with_items: "{{ update_results.results }}"
