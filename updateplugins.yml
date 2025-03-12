@@ -41,4 +41,10 @@
         - name: Log failed updates for each site
           lineinfile:
             path: "{{ log_file }}"
-            line: "Failed update on site {{
+            line: "Failed update on site {{ site }}: {{ update_result.results[site_index].stdout }}"
+            create: yes
+          when: update_result.results[site_index].rc != 0
+          loop: "{{ site_names }}"
+          loop_control:
+            loop_var: site
+            index_var: site_index
