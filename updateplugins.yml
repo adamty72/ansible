@@ -23,7 +23,7 @@
       register: update_results
       ignore_errors: yes
       
-   - name: Send update results to Teams
+    - name: Send update results to Teams
       uri:
         url: "{{ teams_webhook_url }}"
         method: POST
