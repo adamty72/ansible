@@ -18,9 +18,10 @@
         site_urls: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list }}"
 
     - name: Check and update WordPress plugins site by site
+      block:
         - name: Update WordPress plugins for each site
-          shell:
-           gp wp {{ item }} plugin list --field=name --status=active --update=available | xargs -I {} gp wp {{ item }} plugin update {}
+          shell: |
+            gp wp {{ item }} plugin list --field=name --status=active --update=available | xargs -I {} gp wp {{ item }} plugin update {}
           register: update_result
           ignore_errors: yes
           loop: "{{ site_urls }}"
