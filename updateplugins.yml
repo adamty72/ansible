@@ -13,10 +13,10 @@
         recurse: yes
       register: wp_sites
 
-    - name: Extract WordPress site subdirectory names
+    - name: Get WordPress site URLs (subdirectory names)
       set_fact:
-        wp_sites_info: "{{ wp_sites.files | map(attribute='path') | map('dirname') | list | unique | list }}"
-        site_names: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list | unique | list }}"
+        site_urls: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list }}"
+
 
     - name: Update WordPress plugins site by site
       block:
