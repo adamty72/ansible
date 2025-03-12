@@ -13,34 +13,32 @@
         recurse: yes
       register: wp_sites
 
-    - name: Get WordPress site directories
+    - name: Extract WordPress site subdirectory names
       set_fact:
-        site_urls: "{{ wp_sites.files | map(attribute='path') | map('dirname') | list }}"
+        wp_sites_info: "{{ wp_sites.files | map(attribute='path') | map('dirname') | list | unique | list }}"
+        site_names: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list | unique | list }}"
 
     - name: Update WordPress plugins site by site
       block:
         - name: Update WordPress plugins for each site
           shell: |
-            gp wp {{ site }} plugin list --field=name --status=active --update=available | xargs -I {} gp wp {{ site }} plugin update {}
+            gp wp {{ wp_sites_info[site_index] }} plugin list --field=name --status=active --update=available | xargs -I {} gp wp {{ wp_sites_info[site_index] }} plugin update {}
           register: update_result
           ignore_errors: yes
-          loop: "{{ site_urls }}"
+          loop: "{{ site_names }}"
           loop_control:
             loop_var: site
+            index_var: site_index
 
         - name: Report update result for each site
           debug:
-            msg: "Update result for {{ site }}: {{ update_result.stdout }}"
-          loop: "{{ update_result.results }}"
+            msg: "Update result for {{ site }}: {{ update_result.results[site_index].stdout }}"
+          loop: "{{ site_names }}"
           loop_control:
             loop_var: site
+            index_var: site_index
 
         - name: Log failed updates for each site
           lineinfile:
             path: "{{ log_file }}"
-            line: "Failed update on site {{ site }}: {{ site.stdout }}"
-            create: yes
-          when: site.rc != 0
-          loop: "{{ update_result.results }}"
-          loop_control:
-            loop_var: site
+            line: "Failed update on site {{
