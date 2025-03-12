@@ -17,30 +17,23 @@
       set_fact:
         site_urls: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list }}"
 
-    - name: Check and update WordPress plugins site by site
+    - name: Check and update WordPress plugins
       block:
-        - name: Update WordPress plugins for each site
-          shell: |
-            gp wp {{ item }} plugin list --field=name --status=active --update=available | xargs -I {} gp wp {{ item }} plugin update {}
-          register: update_result
+        - name: Update WordPress plugins
+          shell: gp wp {{ item }} plugin list --field=name --status=active --update=available | xargs -I {} gp wp {{ item }} plugin update {}
+          with_items: "{{ site_urls }}"
+          register: update_results
           ignore_errors: yes
-          loop: "{{ site_urls }}"
-          loop_control:
-            loop_var: site
 
         - name: Collect update results
           set_fact:
-            updates: "{{ updates | default([]) + [{'site': site, 'result': update_result.stdout, 'failed': update_result.rc != 0}] }}"
-          loop: "{{ update_result.results }}"
-          loop_control:
-            loop_var: site
+            updates: "{{ updates | default([]) + [{'site': item.item, 'result': item.stdout, 'failed': item.rc != 0}] }}"
+          with_items: "{{ update_results.results }}"
 
         - name: Log failed updates
           lineinfile:
             path: "{{ log_file }}"
-            line: "Failed update on site {{ site }}: {{ update_result.stdout }}"
+            line: "Failed update on site {{ item.item }}: {{ item.stdout }}"
             create: yes
-          when: update_result.rc != 0
-          loop: "{{ update_result.results }}"
-          loop_control:
-            loop_var: site
+          with_items: "{{ update_results.results }}"
+          when: item.rc != 0
