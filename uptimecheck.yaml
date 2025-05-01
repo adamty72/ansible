@@ -26,17 +26,16 @@
       with_items: "{{ site_urls }}"
       register: url_check
 
-    - name: Send Teams message if URL is down
+    - name: Send alert to Teams if disk usage of vda1 is over 75%
+      uri:
+        url: "{{ teams_webhook_url }}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body: >
+          {
+            "title": "Site Down",
+            "text": "{{ item }} is down"
+          }
+        body_format: json
       when: url_check.status != 200
-      block:
-        - name: Create message payload
-          set_fact:
-            teams_message: '{"text": "Alert: {{ item }} is down!"}'
-
-        - name: Send message to Teams
-          uri:
-            url: "{{ teams_webhook_url }}"
-            method: POST
-            body: "{{ teams_message }}"
-            headers:
-              Content-Type: "application/json"
