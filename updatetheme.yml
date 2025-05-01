@@ -18,7 +18,7 @@
         site_urls: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list }}"
 
     - name: Check and update WordPress themes
-      shell: gp wp {{ item }} theme list --field=name --update=available | xargs -I {} gp wp {{ item }} theme update --all {}
+      shell: gp wp {{ item }} theme list --field=name --update=available | xargs -I {} gp wp {{ item }} theme update {}
       with_items: "{{ site_urls }}"
       register: update_results
       ignore_errors: yes
