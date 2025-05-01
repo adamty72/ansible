@@ -17,29 +17,26 @@
       set_fact:
         site_urls: "{{ wp_sites.files | map(attribute='path') | map('dirname') | map('basename') | list }}"
 
+    - name: Check if URL is reachable
+      uri:
+        url: "{{ item }}"
+        method: GET
+        status_code: 200
+        timeout: 10
+      with_items: "{{ site_urls }}"
+      register: url_check
 
+    - name: Send Teams message if URL is down
+      when: url_check.status != 200
+      block:
+        - name: Create message payload
+          set_fact:
+            teams_message: '{"text": "Alert: {{ item }} is down!"}'
 
-    - name: Check if URL is reachable
-      uri:
-        url: "{{ site_url }}"
-        method: GET
-        status_code: 200
-        timeout: 10
-        with_items "{{ site_urls }}"
-      register: url_check
-
-- name: Send Teams message if URL is down
-      when: url_check.status != 200
-      block:
-        - name: Create message payload
-          set_fact:
-            teams_message: '{"text": "Alert: {{ site_url }} is down!"}'
-
-- name: Send message to Teams
-          uri:
-            url: "{{ teams_webhook_url }}"
-            method: POST
-            body: "{{ teams_message }}"
-            headers:
-              Content-Type: "application/json"
-
+        - name: Send message to Teams
+          uri:
+            url: "{{ teams_webhook_url }}"
+            method: POST
+            body: "{{ teams_message }}"
+            headers:
+              Content-Type: "application/json"
