@@ -19,7 +19,7 @@
 
     - name: Check if URL is reachable
       uri:
-        url: "{{ item }}"
+        url: https://"{{ item }}"
         method: GET
         status_code: 200
         timeout: 10
